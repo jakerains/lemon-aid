@@ -154,13 +154,38 @@ The tool generates training data in JSONL format with special tokens:
 }
 ```
 
-## ⚡ Error Handling
+## 🛡️ Error Handling
 
 - Graceful shutdown on interruption
 - Automatic retry mechanisms
 - Rate limit handling
 - Progress preservation
 - Detailed error tracking
+
+## 🚀 Next Steps: Fine-tuning with Unsloth
+
+After generating your training data JSONL file, you can use [Unsloth](https://docs.unsloth.ai/) to fine-tune your own model. Unsloth makes fine-tuning large language models:
+- 2x faster
+- Uses 70% less memory
+- No degradation in accuracy
+
+### Quick Start with Unsloth
+1. Access their [Google Colab notebook](https://colab.research.google.com/drive/1VYkncZMfGFkeCEgN2IzbZIKEDkyQuJAS?usp=sharing) for CSV/Excel fine-tuning
+2. Upload your generated JSONL file
+3. Follow their tutorial to fine-tune models like:
+   - Llama-3
+   - Mistral
+   - Phi-4
+   - Gemma
+   - And more!
+
+### Key Features
+- Supports multiple chat templates (ChatML, Llama, Alpaca, etc.)
+- Automatic Modelfile creation for Ollama export
+- Interactive ChatGPT-style interface after fine-tuning
+- Export options to GGUF format for local deployment
+
+For detailed instructions, visit [Unsloth's documentation](https://docs.unsloth.ai/basics/tutorial-how-to-finetune-llama-3-and-use-in-ollama).
 
 ## 📋 Requirements
 
