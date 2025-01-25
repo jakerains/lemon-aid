@@ -3,7 +3,7 @@
 <div align="center">
   <img src="assets/lemonaidlogo.png" alt="Lemon-Aid Logo" width="200"/>
   
-  <h1>🍋 Easy Training Data Generation infused with Citrus! 🍋</h1>
+  <h3>🍋 Easy Training Data Generation infused with Citrus! 🍋</h3>
   
   <p><strong>Lemon-Aid v1.0.3</strong></p>
 
