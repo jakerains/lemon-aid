@@ -4,7 +4,7 @@ Handles multiple providers that support the OpenAI schema.
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Union, Tuple, Any
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -15,7 +15,6 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 import os
 import re
 from openai import AsyncOpenAI
-from huggingface_hub import InferenceClient
 import aiohttp
 import asyncio
 import time
@@ -23,6 +22,7 @@ from rich.live import Live
 from rich.layout import Layout
 import sys
 import msvcrt
+import requests
 
 console = Console()
 
@@ -60,7 +60,7 @@ class LLMProvider:
     description: str = ""
     context_window: Optional[int] = None
     model_type: Optional[str] = None
-    client_type: str = "openai"  # Can be "openai" or "huggingface"
+    client_type: str = "openai"  # Can be "openai" or "ollama"
     _api_key: Optional[str] = None
 
     @property
@@ -77,21 +77,42 @@ class LLMProvider:
 
     @property
     def is_available(self) -> bool:
-        """Check if provider is available (has API key)."""
+        """Check if provider is available (has API key or is local)."""
+        if self.client_type == "ollama":
+            try:
+                # Check if Ollama is running locally
+                response = requests.get(f"{self.base_url}/api/tags")
+                if response.status_code == 200:
+                    # Update available models list dynamically
+                    models = response.json()
+                    self.available_models = sorted([model['name'] for model in models['models']])
+                    return True
+            except:
+                return False
         return bool(self.api_key)
 
     def get_key_pattern(self) -> Tuple[str, str]:
         """Get the expected pattern and example for the provider's API key."""
         patterns = {
             "OpenAI": (r"^sk-[A-Za-z0-9-_]{32,}$", "sk-proj-xxxxxxxxxxxx..."),
-            "DeepSeek": (r"^[A-Za-z0-9]{32,}$", "abcdefgh12345678ijklmnop90123456"),
-            "Groq": (r"^gsk_[A-Za-z0-9]{32,}$", "gsk_abcdefgh12345678ijklmnop90123456"),
-            "Hugging Face": (r"^hf_[A-Za-z0-9]{32,}$", "hf_abcdefgh12345678ijklmnop90123456"),
+            "DeepSeek": (r"^sk-[A-Za-z0-9]{32}$", "sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx"),
+            "Groq": (r"^gsk_[A-Za-z0-9_-]{48,}$", "gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+            "Ollama": (r".*", "No API key needed - local service"),
         }
         return patterns.get(self.name, (r".+", "any-valid-key-format"))
 
     async def validate_key(self, key: str) -> Tuple[bool, str]:
         """Validate the API key format and test the connection."""
+        if self.client_type == "ollama":
+            try:
+                # Check if Ollama service is running
+                response = requests.get(f"{self.base_url}/api/tags")
+                if response.status_code == 200:
+                    return True, "Ollama service is running"
+                return False, "Ollama service is not running"
+            except Exception as e:
+                return False, f"Cannot connect to Ollama service: {str(e)}"
+        
         pattern, example = self.get_key_pattern()
         
         # First check the format
@@ -100,24 +121,29 @@ class LLMProvider:
         
         # Then test the connection with provider-specific checks
         try:
-            if self.client_type == "huggingface":
-                client = InferenceClient(api_key=key)
-                # Test with a simple model info request
-                await client.get_model_info("gpt2")
-                return True, "API key validated successfully"
-                
             # For OpenAI-compatible APIs (OpenAI, DeepSeek, Groq)
             async with aiohttp.ClientSession() as session:
                 headers = {"Authorization": f"Bearer {key}"}
                 
-                # First try a models list request
+                # For Groq, skip the models list check and go straight to chat completion
+                if self.name == "Groq":
+                    test_data = {
+                        "model": "mixtral-8x7b-32768",
+                        "messages": [{"role": "user", "content": "Hello"}],
+                        "max_tokens": 1
+                    }
+                    async with session.post(f"{self.base_url}/chat/completions", headers=headers, json=test_data) as resp:
+                        if resp.status != 200:
+                            return False, f"API key validation failed: {resp.status} {resp.reason}"
+                        return True, "API key validated successfully"
+                
+                # For other providers, try models list first
                 async with session.get(f"{self.base_url}/models", headers=headers) as response:
                     if response.status != 200:
                         return False, f"API key validation failed: {response.status} {response.reason}"
                     
                     # For each provider, test with a specific model
                     if self.name == "OpenAI":
-                        # Test with a simple completion request
                         test_data = {
                             "model": "gpt-3.5-turbo",
                             "messages": [{"role": "user", "content": "Hello"}],
@@ -128,7 +154,6 @@ class LLMProvider:
                                 return False, "API key validation failed: Unable to make a test completion request"
                     
                     elif self.name == "DeepSeek":
-                        # Test with deepseek-chat model
                         test_data = {
                             "model": "deepseek-chat",
                             "messages": [{"role": "user", "content": "Hello"}],
@@ -137,17 +162,6 @@ class LLMProvider:
                         async with session.post(f"{self.base_url}/chat/completions", headers=headers, json=test_data) as resp:
                             if resp.status != 200:
                                 return False, "API key validation failed: Unable to access DeepSeek chat model"
-                    
-                    elif self.name == "Groq":
-                        # Test with a Llama model
-                        test_data = {
-                            "model": "llama-3.1-8b-instant",
-                            "messages": [{"role": "user", "content": "Hello"}],
-                            "max_tokens": 1
-                        }
-                        async with session.post(f"{self.base_url}/chat/completions", headers=headers, json=test_data) as resp:
-                            if resp.status != 200:
-                                return False, "API key validation failed: Unable to access Groq models"
                 
                 return True, "API key validated successfully"
             
@@ -158,6 +172,26 @@ class LLMProvider:
 
     async def prompt_for_api_key(self) -> bool:
         """Prompt user for API key if not found in environment."""
+        if self.client_type == "ollama":
+            # For Ollama, just check if the service is running
+            is_valid, message = await self.validate_key("")
+            if is_valid:
+                console.print(Panel(
+                    "[green]✓ Ollama service detected and running![/green]",
+                    border_style="green",
+                    box=box.ROUNDED
+                ))
+                return True
+            else:
+                console.print(Panel(
+                    f"[red]✗ {message}[/red]\n"
+                    "[yellow]Please make sure Ollama is installed and running.[/yellow]\n"
+                    "Visit: [link=https://ollama.ai]https://ollama.ai[/link] for installation instructions.",
+                    border_style="red",
+                    box=box.ROUNDED
+                ))
+                return False
+        
         pattern, example = self.get_key_pattern()
         
         # Create a styled panel with provider-specific information
@@ -234,34 +268,43 @@ PROVIDERS = {
         base_url="https://api.openai.com/v1",
         api_key_env="OPENAI_API_KEY",
         available_models=[
-            "gpt-4o",       # Latest large GA model (2024-11-20)
-            "gpt-4o-mini",  # Latest small GA model (2024-07-18)
+            "gpt-4o",  # Latest large GA model
+            "gpt-4o-mini",  # Latest small GA model
         ],
-        default_model="gpt-4o",
+        default_model="gpt-4o-mini",
         max_tokens=16384,
         context_window=128000,
-        description="Latest GPT-4o models with 128k context window",
+        description="OpenAI's GPT models",
         model_type="Text Generation, Reasoning",
         supports_functions=True,
         client_type="openai"
     ),
+    "ollama": LLMProvider(
+        name="Ollama",
+        base_url="http://localhost:11434",
+        api_key_env="",  # No API key needed for local Ollama
+        available_models=[],  # Empty list, will be populated dynamically
+        default_model="",  # Will be set after fetching models
+        max_tokens=4096,
+        context_window=8192,
+        description="Local Ollama models",
+        model_type="Text Generation",
+        supports_functions=False,
+        client_type="ollama"
+    ),
     "deepseek": LLMProvider(
         name="DeepSeek",
-        base_url="https://api.deepseek.com/v1",  # OpenAI-compatible endpoint
+        base_url="https://api.deepseek.com/v1",
         api_key_env="DEEPSEEK_API_KEY",
         available_models=[
-            "deepseek-chat",      # Latest V3 model (2024/12/26)
-            "deepseek-reasoner",  # Latest R1 model (2025/01/20)
+            "deepseek-chat",
+            "deepseek-coder",
         ],
         default_model="deepseek-chat",
         max_tokens=8192,
-        description=(
-            "Latest DeepSeek models including V3 and R1. "
-            "Supports streaming, JSON mode, function calling, context caching, "
-            "chat prefix completion, and FIM completion."
-        ),
-        model_type="Text Generation, Reasoning, Chat",
-        context_window=8192,
+        context_window=16000,
+        description="DeepSeek's chat and code models",
+        model_type="Text Generation, Code",
         supports_functions=True,
         client_type="openai"
     ),
@@ -270,184 +313,161 @@ PROVIDERS = {
         base_url="https://api.groq.com/openai/v1",
         api_key_env="GROQ_API_KEY",
         available_models=[
-            "llama-3.3-70b-versatile",     # Latest Llama 3.3 for general use
-            "llama-3.3-70b-specdec",       # Latest Llama 3.3 for specialized tasks
-            "llama-3.1-8b-instant",        # Smaller, faster Llama 3.1 model
-            "llama-3.2-90b-vision-preview" # Latest vision-enabled Llama model
+            # Latest Llama 3.3 models
+            "llama-3.3-70b-specdec",
+            "llama-3.3-70b-versatile",
+            # Llama 3.1 models
+            "llama-3.1-70b-versatile",
+            # Mixtral models
+            "mixtral-8x7b-32768",
+            # Tool-use specialized models
+            "llama3-groq-70b-8192-tool-use-preview",
+            "llama3-groq-8b-8192-tool-use-preview",
+            # Google models
+            "gemma-7b-it",
+            "gemma2-9b-it"
         ],
-        default_model="llama-3.3-70b-versatile",
-        max_tokens=4096,
-        description="Ultra-fast inference optimized Llama models with specialized variants",
-        model_type="Text Generation, Chat, Vision",
+        default_model="llama-3.3-70b-versatile",  # Updated default to latest model
+        max_tokens=32768,
+        context_window=32768,
+        description="Ultra-fast inference with Groq",
+        model_type="Text Generation",
         supports_functions=True,
         client_type="openai"
     ),
-    "huggingface": LLMProvider(
-        name="Hugging Face",
-        base_url="https://api-inference.huggingface.co/models",
-        api_key_env="HF_API_KEY",
-        available_models=[
-            # Latest Large Language Models
-            "meta-llama/Llama-3.1-70B-Instruct",  # Latest Llama 3.1
-            "mistralai/Mixtral-8x7B-Instruct-v0.1",  # Latest Mixtral
-            "google/gemma-7b-it",  # Latest Gemma
-            "01-ai/Yi-34b-chat",  # Latest Yi
-            "Qwen/Qwen1.5-72B-Chat",  # Latest Qwen
-            
-            # Code Models
-            "bigcode/starcoder2-15b",  # Latest StarCoder
-            
-            # Embeddings
-            "BAAI/bge-large-en-v1.5",  # Latest BGE embeddings
-        ],
-        default_model="meta-llama/Llama-3.1-70B-Instruct",
-        max_tokens=4096,
-        description="Direct access to latest open source models",
-        model_type="Text Generation, Code, Embeddings",
-        client_type="huggingface"
-    ),
 }
 
-def get_available_providers() -> Dict[str, LLMProvider]:
-    """Returns a dictionary of available providers (those with API keys configured)."""
-    return {k: v for k, v in PROVIDERS.items() if v.is_available}
-
 async def select_provider() -> Optional[LLMProvider]:
-    """Interactive provider selection with API key prompting."""
-    try:
-        # Clear screen once at the start
-        console.clear()
-
-        # First display the ASCII art line by line
+    """Display available providers and let user select one."""
+    # Create a table to display provider information
+    table = Table(
+        show_header=True,
+        header_style="bold magenta",
+        box=box.ROUNDED,
+        title="[bold]Available LLM Providers[/bold]"
+    )
+    
+    table.add_column("#", style="cyan", justify="right")
+    table.add_column("Provider", style="green")
+    table.add_column("Description", style="yellow")
+    table.add_column("Status", style="cyan")
+    
+    # Add providers to table
+    for i, (key, provider) in enumerate(PROVIDERS.items(), 1):
+        status = "[green]Available[/green]" if provider.is_available else "[red]Needs Setup[/red]"
+        table.add_row(
+            str(i),
+            provider.name,
+            provider.description,
+            status
+        )
+    
+    console.print(table)
+    console.print("\n[yellow]Select a provider by number:[/yellow]")
+    
+    while True:
         try:
-            with open('lemon-aid-big-ascii-art.txt', 'r', encoding='utf-8') as f:
-                ascii_art = f.read().splitlines()
-                # Filter empty lines at start and end
-                while ascii_art and not ascii_art[0].strip():
-                    ascii_art.pop(0)
-                while ascii_art and not ascii_art[-1].strip():
-                    ascii_art.pop()
-                
-                # Display each line with color
-                for i, line in enumerate(ascii_art):
-                    if "AID" in line:
-                        parts = line.split("AID")
-                        text = Text()
-                        text.append(parts[0], style="yellow")
-                        text.append("AID", style="green")
-                        if len(parts) > 1:
-                            text.append(parts[1], style="yellow")
-                    elif 2 <= i <= 4 and "⣿" in line:  # Only color the leaf area
-                        text = Text(line, style="green")
-                    else:
-                        text = Text(line, style="yellow")
-                    console.print(text)
-                    time.sleep(0.02)  # Slight delay between lines
-        except FileNotFoundError:
-            console.print(Panel(
-                "🍋 [bold yellow]Welcome to Lemon-Aid![/bold yellow]",
-                subtitle="[italic]Training Data Generation Tool[/italic]",
-                box=box.ROUNDED,
-                border_style="yellow",
-                padding=(1, 2)
-            ))
-
-        # Add some spacing and pause
-        console.print()
-        time.sleep(0.5)  # Let user see the ASCII art
-
-        # Create providers table
-        table = Table(
-            title="🤖 [bold]Available LLM Providers[/bold]",
-            box=box.ROUNDED,
-            show_header=True,
-            header_style="bold cyan",
-            padding=(0, 1),
-            expand=True,
-            row_styles=["", "dim"]
-        )
-        
-        table.add_column("Provider", style="cyan", no_wrap=True)
-        table.add_column("Status", style="green", justify="center")
-        table.add_column("Description", style="yellow", max_width=50)
-        table.add_column("Types", style="magenta", no_wrap=True)
-
-        # Show table with animation
-        providers_list = list(PROVIDERS.values())
-        with Live(table, console=console, refresh_per_second=8) as live:
-            for provider in providers_list:
-                status = "[green]✓ Connected[/green]" if provider.is_available else "[yellow]⚠ Needs API Key[/yellow]"
-                table.add_row(
-                    f"[bold]{provider.name}[/bold]",
-                    status,
-                    Text(provider.description, style="yellow", justify="left"),
-                    Text(provider.model_type or "General Purpose", style="magenta")
-                )
-                time.sleep(0.15)  # Smooth animation for table rows
-
-        # Show provider selection menu
-        console.print()
-        console.print("[cyan]Select a provider:[/cyan]")
-        
-        # Handle provider selection
-        while True:
-            try:
-                # Display numbered list of providers
-                for i, provider in enumerate(providers_list, 1):
-                    status = "[green]✓[/green]" if provider.is_available else "[yellow]⚠[/yellow]"
-                    console.print(f"[cyan]{i}[/cyan]. {status} {provider.name}")
-
-                choice = int(input("\nChoice: ")) - 1
-                if 0 <= choice < len(providers_list):
-                    selected = providers_list[choice]
-                    
-                    # If provider needs API key, prompt for it
-                    if not selected.is_available and not await selected.prompt_for_api_key():
-                        console.print("[red]Cannot proceed without API key.[/red]")
+            choice = int(Prompt.ask("Choice", choices=[str(i) for i in range(1, len(PROVIDERS) + 1)]))
+            provider = list(PROVIDERS.values())[choice - 1]
+            
+            if not provider.is_available:
+                if not await provider.prompt_for_api_key():
+                    if not Prompt.ask(
+                        "\n[yellow]Provider setup failed. Try another?[/yellow]",
+                        choices=["y", "n"],
+                        default="y"
+                    ) == "y":
                         return None
-                    
-                    return selected
-                    
-                console.print("[red]Invalid choice. Please try again.[/red]")
-            except ValueError:
-                console.print("[red]Please enter a number.[/red]")
-
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Provider selection cancelled. Exiting gracefully...[/yellow]")
-        return None
-    except Exception as e:
-        console.print(f"\n[red]An error occurred during provider selection: {e}[/red]")
-        return None
-
-def create_client(provider: LLMProvider) -> Union[AsyncOpenAI, InferenceClient]:
-    """Creates an appropriate client based on the provider type."""
-    if provider.client_type == "huggingface":
-        return InferenceClient(api_key=provider.api_key)
-    else:
-        return AsyncOpenAI(
-            api_key=provider.api_key,
-            base_url=provider.base_url,
-        )
+                    console.print(table)
+                    continue
+            
+            return provider
+            
+        except (ValueError, IndexError):
+            console.print("[red]Invalid choice. Please try again.[/red]")
+        except KeyboardInterrupt:
+            return None
 
 def select_model(provider: LLMProvider) -> Optional[str]:
-    """Interactive model selection for the chosen provider."""
-    try:
-        console.print(f"\n[cyan]Available models for {provider.name}:[/cyan]")
-        
-        for i, model in enumerate(provider.available_models, 1):
-            console.print(f"[cyan]{i}[/cyan]. {model}")
-
-        while True:
-            try:
-                choice = int(input("\nSelect a model (enter number): ")) - 1
-                if 0 <= choice < len(provider.available_models):
-                    return provider.available_models[choice]
-                console.print("[red]Invalid choice. Please try again.[/red]")
-            except ValueError:
-                console.print("[red]Please enter a number.[/red]")
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Model selection cancelled. Exiting gracefully...[/yellow]")
+    """Display available models for the selected provider and let user select one."""
+    if not provider:
         return None
+        
+    # For Ollama, refresh the model list
+    if provider.client_type == "ollama":
+        try:
+            response = requests.get(f"{provider.base_url}/api/tags")
+            if response.status_code == 200:
+                models = response.json()
+                provider.available_models = sorted([model['name'] for model in models['models']])
+                if not provider.default_model and provider.available_models:
+                    # Set default model to first available model
+                    provider.default_model = provider.available_models[0]
+        except Exception as e:
+            console.print(f"[red]Error fetching Ollama models: {str(e)}[/red]")
+            return None
+    
+    if not provider.available_models:
+        console.print("[red]No models available for this provider.[/red]")
+        return None
+        
+    # Create a table to display model information
+    table = Table(
+        show_header=True,
+        header_style="bold magenta",
+        box=box.ROUNDED,
+        title=f"[bold]{provider.name} Models[/bold]"
+    )
+    
+    table.add_column("#", style="cyan", justify="right")
+    table.add_column("Model", style="green")
+    if provider.client_type != "ollama":
+        table.add_column("Max Tokens", style="yellow")
+        table.add_column("Context", style="cyan")
+    
+    # Add models to table
+    for i, model in enumerate(provider.available_models, 1):
+        if provider.client_type == "ollama":
+            table.add_row(
+                str(i),
+                model
+            )
+        else:
+            table.add_row(
+                str(i),
+                model,
+                str(provider.max_tokens),
+                str(provider.context_window or "Default")
+            )
+    
+    console.print(table)
+    console.print("\n[yellow]Select a model by number:[/yellow]")
+    
+    while True:
+        try:
+            choice = int(Prompt.ask("Choice", choices=[str(i) for i in range(1, len(provider.available_models) + 1)]))
+            return provider.available_models[choice - 1]
+        except (ValueError, IndexError):
+            console.print("[red]Invalid choice. Please try again.[/red]")
+        except KeyboardInterrupt:
+            return None
+
+def create_client(provider: LLMProvider) -> Optional[Union[AsyncOpenAI, Any]]:
+    """Create an API client for the selected provider."""
+    if not provider or not provider.is_available:
+        return None
+        
+    try:
+        if provider.client_type == "ollama":
+            # For Ollama, we don't need to create a persistent client
+            # We'll create sessions as needed in the generate function
+            return "ollama"
+        else:
+            # For OpenAI-compatible APIs
+            return AsyncOpenAI(
+                api_key=provider.api_key,
+                base_url=provider.base_url
+            )
     except Exception as e:
-        console.print(f"\n[red]An error occurred during model selection: {e}[/red]")
+        console.print(f"[red]Error creating client: {str(e)}[/red]")
         return None 

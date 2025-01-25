@@ -1,26 +1,22 @@
-# Lemon-Aid 🍋
+# 🍋 Lemon-Aid
 
-<p align="center">
-  <img src="lemonaidlogo.png" alt="Lemon-Aid Logo" width="400"/>
-</p>
-
-[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![License: Commons Clause](https://img.shields.io/badge/License-Commons%20Clause-red.svg)](LICENSE)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
-> A powerful tool to help generate high-quality training data for fine-tuning language models. Lemon-Aid supports multiple LLM providers including OpenAI, DeepSeek, Groq, and Hugging Face to generate diverse, high-quality question-answer pairs while maintaining consistency and avoiding common pitfalls.
+A powerful tool for generating high-quality training data using multiple LLM providers, designed specifically for fine-tuning language models.
 
 ## ✨ Features
 
-- 🌐 Multi-provider support with unified interface
-- 🤖 Latest models from OpenAI, DeepSeek, Groq, and Hugging Face
-- 🚀 Asynchronous generation of training data
-- 🔍 Automatic duplicate detection and avoidance
-- 🧠 Dynamic prompt adaptation based on generation quality
+- 🤖 Multi-provider support:
+  - OpenAI (GPT-4o, GPT-4o-mini)
+  - DeepSeek (chat, coder)
+  - Groq (Llama 3.x, Mixtral)
+  - Ollama (local models)
+- 🎯 Dynamic response length control
 - 💾 Progress saving and recovery
-- 📊 Rich console interface with detailed progress tracking
-- ⚙️ Configurable system prompts with user approval workflow
-- 📄 JSONL output format compatible with fine-tuning
+- 🔄 Interactive example generation
+- 📝 System prompt customization
+- 🎨 Rich console interface
+- 📊 Detailed progress tracking
+- ⚡ Parallel batch processing
+- 🛡️ Comprehensive error handling
 
 ## 🚀 Quick Start
 
@@ -31,7 +27,7 @@
   - OpenAI ([Get key](https://platform.openai.com))
   - DeepSeek ([Get key](https://platform.deepseek.com))
   - Groq ([Get key](https://console.groq.com))
-  - Hugging Face ([Get key](https://huggingface.co/settings/tokens))
+  - Ollama ([Install locally](https://ollama.ai))
 
 ### Installation
 
@@ -49,7 +45,7 @@ pip install -r requirements.txt
 3. Set up your environment:
 ```bash
 cp .env.example .env
-# Edit .env with your API keys and preferences
+# Edit .env with your API keys
 ```
 
 ## 💻 Usage
@@ -59,60 +55,47 @@ Run the script:
 python lemonaid.py
 ```
 
-You'll be prompted to:
-1. Select your preferred LLM provider
-2. Choose a specific model from the provider
-3. Enter your topic for training data generation
-4. Specify the number of entries you want
-5. Provide an output filename (defaults to training_data.jsonl)
+You'll be guided through:
+1. Selecting your LLM provider
+2. Choosing a specific model
+3. Configuring your training data requirements:
+   - Purpose/context
+   - Answer length preference
+   - Number of examples
+   - Output filename
 
 The tool will then:
 1. Generate and let you approve a system prompt
 2. Show example Q&A pairs for your approval
-3. Generate the requested number of entries with progress tracking
-
-## 🤖 Supported Models
-
-### OpenAI
-- GPT-4o (Latest large GA model, 128k context)
-- GPT-4o-mini (Latest small GA model, 128k context)
-
-### DeepSeek
-- DeepSeek-chat (Latest V3 model)
-- DeepSeek-reasoner (Latest R1 model)
-
-### Groq
-- Llama-3.3-70b-versatile (Latest Llama 3.3 for general use)
-- Llama-3.3-70b-specdec (Latest Llama 3.3 for specialized tasks)
-- Llama-3.1-8b-instant (Smaller, faster Llama 3.1 model)
-- Llama-3.2-90b-vision-preview (Latest vision-enabled Llama model)
-
-### Hugging Face
-- Latest open source models including Llama, Mixtral, Gemma, Yi, and more
-- Code-specialized models like StarCoder
-- Embedding models for specialized tasks
+3. Generate the requested entries with progress tracking
+4. Save results in JSONL format for fine-tuning
 
 ## 📄 Output Format
 
-The tool generates JSONL files with entries formatted for fine-tuning:
+The tool generates JSONL files formatted for fine-tuning:
 ```json
 {
-    "text": "Below is an instruction that describes a task...\n\n### Instruction:\n[Question]\n\n### Response:\n[Answer]\n<|end_of_text|>"
+    "text": "<|im_start|>system\nYou are a knowledgeable assistant...<|im_end|>\n<|im_start|>user\n[Question]<|im_end|>\n<|im_start|>assistant\n[Answer]<|im_end|>"
 }
 ```
 
 ## 🛡️ Error Handling
 
-- ♻️ Automatic retry with exponential backoff for API failures
-- 💾 Progress saving on interruption
-- 🔍 Duplicate detection and avoidance
-- 🚨 Graceful error handling with informative messages
+- Automatic retries with exponential backoff
+- Progress saving on interruption
+- Rate limit management
+- Graceful shutdown
+- Detailed error messages
 
 ## 📦 Dependencies
 
-- OpenAI SDK (>=1.0.0)
-- Hugging Face Hub (>=0.20.3)
-- See [requirements.txt](requirements.txt) for the full list of dependencies
+See [requirements.txt](requirements.txt) for the full list:
+- openai>=1.12.0
+- python-dotenv>=1.0.0
+- rich>=13.7.0
+- aiohttp>=3.9.3
+- backoff>=2.2.1
+- tqdm>=4.66.2
 
 ## 🤝 Contributing
 
@@ -137,5 +120,5 @@ All rights reserved by Jake Rains.
 
 ## 🙏 Acknowledgments
 
-- OpenAI, DeepSeek, Groq, and Hugging Face for their APIs
+- OpenAI, DeepSeek, Groq, and Ollama for their APIs
 - All contributors and users of this project 

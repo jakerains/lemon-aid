@@ -32,21 +32,48 @@ console = Console()
 def create_header() -> Panel:
     """Create the header panel with ASCII art."""
     try:
-        with open('ascii-art-small.txt', 'r', encoding='utf-8') as f:
-            art = f.read()
-        return Panel(
-            art,
-            box=box.ROUNDED,
-            border_style="yellow",
-            padding=(1, 2),
-            title="🍋 [bold yellow]Welcome to Lemon-Aid[/bold yellow] 🍋",
-            subtitle="[italic]Training Data Generation Tool[/italic]"
-        )
+        with open('lemon-aid-big-ascii-art.txt', 'r', encoding='utf-8') as f:
+            ascii_art = f.read().splitlines()
+            # Filter empty lines at start and end
+            while ascii_art and not ascii_art[0].strip():
+                ascii_art.pop(0)
+            while ascii_art and not ascii_art[-1].strip():
+                ascii_art.pop()
+            
+            # Create styled text with colors
+            styled_art = Text()
+            
+            # Process each line
+            for i, line in enumerate(ascii_art):
+                if "LEMON-AID" in line:
+                    # Split and color the LEMON-AID line
+                    parts = line.split("LEMON-AID")
+                    styled_art.append(parts[0], style="yellow")
+                    styled_art.append("LEMON-AID", style="green")
+                    if len(parts) > 1:
+                        styled_art.append(parts[1], style="yellow")
+                    styled_art.append("\n")
+                elif 2 <= i <= 4 and "⣿" in line:  # Only color the leaf area (lines 2-4)
+                    styled_art.append(line, style="green")
+                    styled_art.append("\n")
+                else:  # The rest of the lemon in yellow
+                    styled_art.append(line, style="yellow")
+                    styled_art.append("\n")
+            
+            return Panel(
+                styled_art,
+                box=box.ROUNDED,
+                border_style="yellow",
+                padding=(1, 2),
+                title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.1[/bold yellow] 🍋",
+                subtitle="[bright_white]Easy Training Data infused with Citrus![/bright_white]"
+            )
     except FileNotFoundError:
         return Panel(
-            "[bold yellow]Welcome to Lemon-Aid![/bold yellow]",
+            "[bold yellow]Welcome to Lemon-Aid![/bold yellow]\nEasy Training Data infused with Citrus!",
             box=box.ROUNDED,
-            border_style="yellow"
+            border_style="yellow",
+            title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.1[/bold yellow] 🍋"
         )
 
 def create_main_layout() -> Layout:
@@ -133,10 +160,10 @@ async def get_user_preferences() -> Dict[str, Any]:
     
     # Map choice to token limits and style guide
     length_settings = {
-        1: {"max_tokens": 512, "style": "concise and direct"},
-        2: {"max_tokens": 1024, "style": "clear and informative"},
-        3: {"max_tokens": 2048, "style": "detailed and thorough"},
-        4: {"max_tokens": 4096, "style": "comprehensive and in-depth"}
+        1: {"max_tokens": 100, "style": "concise and direct", "length_guide": "1-2 sentences"},
+        2: {"max_tokens": 200, "style": "clear and informative", "length_guide": "2-3 sentences"},
+        3: {"max_tokens": 400, "style": "detailed and thorough", "length_guide": "4-5 sentences"},
+        4: {"max_tokens": 800, "style": "comprehensive and in-depth", "length_guide": "6+ sentences"}
     }
     console.print(f"[debug] Length settings: {length_settings[length_choice]}")
     
@@ -218,9 +245,9 @@ async def generate_batch(client, system_prompt: str, num_to_generate: int, max_t
     if isinstance(client, AsyncOpenAI):  # OpenAI client
         max_concurrent = 10  # Higher limit for OpenAI
         chunk_size = 5
-    else:  # Other providers
-        max_concurrent = 3  # Lower limit for other providers
-        chunk_size = 2
+    else:  # Other providers (including Ollama)
+        max_concurrent = 2  # Lower limit for other providers
+        chunk_size = 1  # Process one at a time for Ollama
     
     semaphore = asyncio.Semaphore(max_concurrent)
     
@@ -229,33 +256,58 @@ async def generate_batch(client, system_prompt: str, num_to_generate: int, max_t
         try:
             async with semaphore:  # Control concurrent API calls
                 prompt = (
-                    "Generate a unique question and detailed answer pair. Format your response exactly like this:\n"
+                    "Generate a unique question and answer pair. Format your response exactly like this:\n"
                     "### User:\n[Your question here]\n\n"
-                    "### Assistant:\n[Your detailed answer here]\n\n"
+                    "### Assistant:\n[Your answer here]\n\n"
                     "Requirements:\n"
-                    "1. Question must be unique and specific\n"
-                    "2. Answer must be complete and thorough (at least 3-4 paragraphs)\n"
-                    "3. Include practical, actionable information with examples\n"
+                    "1. Answer must be 1-2 sentences long\n"
+                    "2. Question must be unique and specific\n"
+                    "3. Include practical, actionable information\n"
                     "4. Avoid self-references or AI mentions\n"
-                    "5. Ensure all steps and explanations are complete\n"
+                    "5. Ensure answer is complete but concise\n"
                     "6. Never end mid-sentence or with ellipsis"
                 )
 
                 # Add timeout to prevent hanging requests
-                async with asyncio.timeout(30):  # 30 second timeout
-                    response = await client.chat.completions.create(
-                        model=model,
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": prompt}
-                        ],
-                        max_tokens=max_tokens,
-                        temperature=0.7,
-                        presence_penalty=0.1,
-                        frequency_penalty=0.1,
-                        timeout=25  # Set API timeout
-                    )
-                    return response.choices[0].message.content.strip()
+                async with asyncio.timeout(60):  # 60 second timeout for Ollama
+                    if isinstance(client, AsyncOpenAI):
+                        # OpenAI-compatible API call
+                        response = await client.chat.completions.create(
+                            model=model,
+                            messages=[
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": prompt}
+                            ],
+                            max_tokens=max_tokens,
+                            temperature=0.7,
+                            presence_penalty=0.1,
+                            frequency_penalty=0.1,
+                            timeout=25
+                        )
+                        return response.choices[0].message.content.strip()
+                    else:
+                        # For Ollama, create a new session for each request
+                        async with aiohttp.ClientSession() as session:
+                            async with session.post(f"http://localhost:11434/api/chat", json={
+                                "model": model,
+                                "messages": [
+                                    {"role": "system", "content": system_prompt},
+                                    {"role": "user", "content": prompt}
+                                ],
+                                "stream": False,
+                                "options": {
+                                    "temperature": 0.7,
+                                    "num_predict": max_tokens
+                                }
+                            }) as response:
+                                if response.status == 200:
+                                    result = await response.json()
+                                    return result["message"]["content"].strip()
+                                else:
+                                    error_text = await response.text()
+                                    console.print(f"[red]Error from Ollama: {error_text}[/red]")
+                                    return None
+                                
         except asyncio.TimeoutError:
             console.print("[yellow]Request timed out, retrying...[/yellow]")
             return None
@@ -273,7 +325,7 @@ async def generate_batch(client, system_prompt: str, num_to_generate: int, max_t
         
         # Add delay between chunks based on provider
         if not isinstance(client, AsyncOpenAI):
-            await asyncio.sleep(0.5)  # Longer delay for non-OpenAI providers
+            await asyncio.sleep(1.0)  # Longer delay for Ollama
         else:
             await asyncio.sleep(0.1)  # Shorter delay for OpenAI
     
@@ -458,6 +510,10 @@ async def generate_training_data(
                 console.print(f"[red]Error saving progress: {e}[/red]")
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
+                    
+            # Return whether save was successful
+            return os.path.exists(output_file)
+        return False
 
     try:
         # Initialize tracking variables
@@ -528,6 +584,11 @@ async def generate_training_data(
                             rate=f"{rate:.1f}"
                         )
                         
+                        # Save progress after each successful batch
+                        await save_progress(training_data, successful_entries)
+                        last_save_time = current_time
+                        entries_since_save = 0
+                        
                         # Dynamically adjust batch size based on performance
                         if batch_time < last_batch_time and batch_size < max_batch_size:
                             batch_size = min(max_batch_size, batch_size + 2)
@@ -535,12 +596,6 @@ async def generate_training_data(
                             batch_size = max(min_batch_size, batch_size - 2)
                         
                         last_batch_time = batch_time
-                        
-                        # Save progress periodically
-                        if entries_since_save >= 10 or (current_time - last_save_time) >= 30:
-                            await save_progress(training_data, successful_entries)
-                            last_save_time = current_time
-                            entries_since_save = 0
                     
                     # Add small delay between batches to prevent rate limiting
                     await asyncio.sleep(0.1)
@@ -558,7 +613,13 @@ async def generate_training_data(
         
     except (KeyboardInterrupt, asyncio.CancelledError):
         console.print("\n[yellow]Generation interrupted. Saving progress...[/yellow]")
-        await save_progress(training_data, successful_entries)
+        # Force a save of any remaining data
+        if training_data:
+            saved = await save_progress(training_data, successful_entries)
+            if saved:
+                console.print("[green]Partial progress was successfully saved.[/green]")
+            else:
+                console.print("[red]Failed to save partial progress.[/red]")
         total_time = time.time() - start_time
         print_generation_stats(total_time, successful_entries, total_attempts)
         return
@@ -651,19 +712,32 @@ async def generate_example_pairs(client, system_prompt: str, preferences: dict, 
 
 async def main():
     """Main execution function."""
+    preferences = None
     try:
+        # Display header
+        console.print(create_header())
+        console.print()  # Add some spacing
+        
         # Load environment variables
         load_dotenv()
         
         # Get provider and model selection
-        provider = await select_provider()
-        if not provider:
-            console.print("[yellow]No provider selected. Exiting...[/yellow]")
+        try:
+            provider = await select_provider()
+            if not provider:
+                console.print("[yellow]Process cancelled. Exiting...[/yellow]")
+                return
+        except (KeyboardInterrupt, EOFError):
+            console.print("[yellow]Process interrupted by user.[/yellow]")
             return
             
-        model = select_model(provider)
-        if not model:
-            console.print("[yellow]No model selected. Exiting...[/yellow]")
+        try:
+            model = select_model(provider)
+            if not model:
+                console.print("[yellow]No model selected. Exiting...[/yellow]")
+                return
+        except (KeyboardInterrupt, EOFError):
+            console.print("[yellow]Process interrupted by user.[/yellow]")
             return
             
         # Initialize the client
@@ -729,19 +803,43 @@ async def main():
             console.print(f"[red]Error during training data generation: {str(e)}[/red]")
             return
             
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Process interrupted by user.[/yellow]")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        console.print("\n[yellow]Process interrupted by user. Cleaning up...[/yellow]")
+        if preferences and 'output_file' in preferences:
+            try:
+                temp_file = preferences['output_file'] + ".temp"
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                console.print("[green]Cleanup completed.[/green]")
+            except Exception as e:
+                console.print(f"[red]Error during cleanup: {str(e)}[/red]")
+        console.print("[green]Shutdown complete.[/green]")
+        return
     except Exception as e:
-        console.print(f"\n[red]An unexpected error occurred: {str(e)}[/red]")
+        console.print(f"\n[red]An error occurred: {str(e)}[/red]")
+        import traceback
+        console.print("[dim]" + traceback.format_exc() + "[/dim]")
     finally:
         try:
             # Clean up any temporary files
-            temp_file = preferences['output_file'] + ".temp" if preferences and 'output_file' in preferences else None
-            if temp_file and os.path.exists(temp_file):
-                os.remove(temp_file)
+            if preferences and 'output_file' in preferences:
+                temp_file = preferences['output_file'] + ".temp"
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
         except Exception:
             pass
-        console.print("\n[green]Process completed. Check your output file for the generated data.[/green]")
+        console.print("\n[green]Process completed.[/green]")
+        sys.exit(0)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, EOFError):
+        console.print("\n[yellow]Process interrupted by user.[/yellow]")
+    except Exception as e:
+        console.print(f"\n[red]An error occurred: {str(e)}[/red]")
+        import traceback
+        console.print("[dim]" + traceback.format_exc() + "[/dim]")
+    finally:
+        console.print("\n[green]Process completed.[/green]")
+        sys.exit(0)
