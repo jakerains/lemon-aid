@@ -1,22 +1,27 @@
 # Changelog
 
-All notable changes to the Lemon-Aid project will be documented in this file.
+## [1.0.2] - 2024-03-19
+
+### Changed
+- Improved project structure with dedicated directories for assets, data, and source code
+- Added launcher script for running from root directory
+- Updated file paths to reflect new directory structure
+- Simplified project organization and improved maintainability
 
 ## [1.0.1] - 2024-03-19
 
 ### Fixed
-- Improved error handling for KeyboardInterrupt (Ctrl+C)
+- Enhanced error handling for KeyboardInterrupt
 - Fixed length settings reference in generate_batch function
 - Corrected API endpoint for Groq provider
-- Updated DeepSeek and Groq API key validation patterns
+- Updated validation patterns for DeepSeek and Groq API keys
 - Removed redundant error messages during shutdown
 
 ### Changed
-- Updated version display in header to 1.0.1
-- Improved progress saving frequency
-- Enhanced error messages for better clarity
+- Version display in header updated to 1.0.1
+- Improved progress saving frequency and error messages
 - Simplified shutdown process
-- Added "Easy Training Data infused with Citrus!" tagline
+- Added tagline "Easy Training Data infused with Citrus!"
 
 ### Added
 - Dynamic model fetching for Ollama provider

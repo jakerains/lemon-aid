@@ -1,23 +1,28 @@
 # Lemon-Aid Project Map
 
 ## Overview
-Lemon-Aid (v1.0.1) is a specialized tool designed for generating high-quality training data using multiple LLM providers. It features a unified interface for working with various language models, robust error handling, and an intuitive console interface.
+Lemon-Aid (v1.0.2) is a specialized tool designed for generating high-quality training data using multiple LLM providers. It features a unified interface for working with various language models, robust error handling, and an intuitive console interface.
 
 ## Core Components
 
-### Main Script (lemonaid.py)
+### Main Script (src/lemonaid.py)
 - Entry point and core functionality
 - Asynchronous processing with rate limiting
 - Rich console interface with progress tracking
 - Dynamic batch size adjustment
 - Comprehensive error handling and recovery
 
-### LLM Providers (llm_providers.py)
+### LLM Providers (src/llm_providers.py)
 - OpenAI (GPT-4o and GPT-4o-mini)
 - DeepSeek (Chat and code models)
 - Groq (Llama 3.x and Mixtral models)
 - Ollama (Local models with dynamic discovery)
 - Provider-specific API handling and rate limiting
+
+### Root Launcher (lemonaid.py)
+- Provides easy access from root directory
+- Handles Python path configuration
+- Maintains proper imports and error handling
 
 ## Core Features
 
@@ -52,12 +57,24 @@ Lemon-Aid (v1.0.1) is a specialized tool designed for generating high-quality tr
 - backoff: Rate limiting
 
 ### File Structure
-- lemonaid.py: Main application
-- llm_providers.py: Provider implementations
+- src/: Source code
+  - lemonaid.py: Main application
+  - llm_providers.py: Provider implementations
+- assets/: Images and resources
+  - lemon-aid-big-ascii-art.txt: ASCII art for header
+  - Various image files (.png, .jpg)
+- data/: Generated data files
+  - training_data.jsonl: Generated training data
+  - Other JSONL files
 - docs/: Documentation
   - CHANGELOG.md: Version history
   - project-map.md: This file
+- lemonaid.py: Root launcher script
 - .env.example: Environment setup guide
+- requirements.txt: Python dependencies
+- LICENSE: Project license
+- README.md: Project documentation
+- .gitignore: Git ignore rules
 
 ## Implementation Details
 
