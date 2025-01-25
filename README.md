@@ -53,6 +53,8 @@
 
 ![Demo Animation](assets/demo.gif)
 
+<img src="assets/menu.png" alt="Menu Screenshot" width="300"/>
+
 </details>
 
 ## 📋 Table of Contents
