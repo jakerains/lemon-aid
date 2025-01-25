@@ -41,4 +41,7 @@ ENV/
 *.jsonl
 *.jsonl.temp
 logs/
-output/ 
+output/
+
+# Cursor Rules
+.cursorrules 

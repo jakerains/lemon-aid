@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.3] - 2024-03-19
+
+### Changed
+- Improved project launcher system with a dedicated `launch.py` script
+- Fixed import conflicts and module organization
+- Cleaned up project root directory structure
+- Updated tagline to "Easy Training Data Generation infused with Citrus!"
+
+### Fixed
+- Resolved Python module import conflicts
+- Fixed encoding issues in launcher scripts
+- Improved project root organization
+
 ## [1.0.2] - 2024-03-19
 
 ### Changed

@@ -65,15 +65,15 @@ def create_header() -> Panel:
                 box=box.ROUNDED,
                 border_style="yellow",
                 padding=(1, 2),
-                title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.2[/bold yellow] 🍋",
-                subtitle="[bright_white]Easy Training Data infused with Citrus![/bright_white]"
+                title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.3[/bold yellow] 🍋",
+                subtitle="[bright_white]Easy Training Data Generation infused with Citrus![/bright_white]"
             )
     except FileNotFoundError:
         return Panel(
-            "[bold yellow]Welcome to Lemon-Aid![/bold yellow]\nEasy Training Data infused with Citrus!",
+            "[bold yellow]Welcome to Lemon-Aid![/bold yellow]\nEasy Training Data Generation infused with Citrus!",
             box=box.ROUNDED,
             border_style="yellow",
-            title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.2[/bold yellow] 🍋"
+            title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.3[/bold yellow] 🍋"
         )
 
 def create_main_layout() -> Layout:

@@ -3,13 +3,13 @@
 <div align="center">
   <img src="assets/lemonaidlogo.png" alt="Lemon-Aid Logo" width="200"/>
   
-  <h1>🍋 Lemon-Aid v1.0.2</h1>
+  <h1>🍋 Easy Training Data Generation infused with Citrus! 🍋</h1>
   
-  <p><em>Easy Training Data infused with Citrus!</em></p>
+  <p><strong>Lemon-Aid v1.0.3</strong></p>
 
   <p>
     <a href="https://github.com/jakerains/lemon-aid/releases/latest">
-      <img alt="Version" src="https://img.shields.io/badge/version-1.0.2-brightgreen.svg"/>
+      <img alt="Version" src="https://img.shields.io/badge/version-1.0.3-brightgreen.svg"/>
     </a>
     <a href="LICENSE">
       <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"/>
