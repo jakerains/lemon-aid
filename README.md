@@ -1,34 +1,106 @@
-# 🍋 Lemon-Aid v1.0.2
+# Lemon-Aid
 
-Easy Training Data infused with Citrus!
+<div align="center">
+  <img src="assets/lemonaidlogo.png" alt="Lemon-Aid Logo" width="200"/>
+  
+  <h1>🍋 Lemon-Aid v1.0.2</h1>
+  
+  <p><em>Easy Training Data infused with Citrus!</em></p>
 
-## Overview
+  <p>
+    <a href="https://github.com/jakerains/lemon-aid/releases/latest">
+      <img alt="Version" src="https://img.shields.io/badge/version-1.0.2-brightgreen.svg"/>
+    </a>
+    <a href="LICENSE">
+      <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"/>
+    </a>
+    <a href="requirements.txt">
+      <img alt="Python 3.8+" src="https://img.shields.io/badge/python-3.8+-blue.svg"/>
+    </a>
+    <img alt="Last Updated" src="https://img.shields.io/badge/Last%20Updated-March%202024-green"/>
+    <br/>
+    <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"/>
+    <img alt="Maintained" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"/>
+  </p>
+
+  <p>
+    <a href="#overview">Overview</a> •
+    <a href="#features">Features</a> •
+    <a href="#quick-start">Quick Start</a> •
+    <a href="#documentation">Docs</a> •
+    <a href="#contributing">Contributing</a>
+  </p>
+</div>
+
+<div align="center">
+  <img src="assets/screengrab.png" alt="Lemon-Aid Demo" width="600"/>
+  <p><em>Generate high-quality training data with a beautiful interface</em></p>
+</div>
+
+## 🌟 Highlights
+
+> 🚀 **Fast & Efficient**: Asynchronous batch processing with smart rate limiting
+>
+> 🎯 **Multi-Provider**: Support for OpenAI, DeepSeek, Groq, and local Ollama models
+>
+> 💡 **Smart Generation**: Dynamic prompt adaptation and duplicate detection
+>
+> 🛡️ **Robust**: Built-in error handling and progress preservation
+
+<details>
+<summary>🎥 Show Demo</summary>
+<br>
+
+![Demo Animation](assets/demo.gif)
+
+</details>
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Output Format](#output-format)
+- [Error Handling](#error-handling)
+- [Requirements](#requirements)
+- [Contributing](#-contributing)
+- [License](#license)
+- [Acknowledgments](#-acknowledgments)
+
+## 🔍 Overview
 
 Lemon-Aid is a powerful tool for generating high-quality training data using multiple LLM providers. It features a unified interface for working with various language models, robust error handling, and an intuitive console interface.
 
-## Features
+## ✨ Features
 
-- **Multi-Provider Support**
-  - OpenAI (GPT-4o and GPT-4o-mini)
-  - DeepSeek (Chat and code models)
-  - Groq (Llama 3.x and Mixtral models)
-  - Ollama (Local models with dynamic discovery)
+<table>
+<tr>
+<td>
 
-- **Advanced Generation**
-  - Asynchronous batch processing
-  - Dynamic prompt adaptation
-  - Duplicate detection and filtering
-  - Progress saving and recovery
-  - Customizable response lengths
+### 🔌 Provider Support
 
-- **Rich Interface**
-  - Interactive provider/model selection
-  - Real-time progress tracking
-  - Detailed error reporting
-  - Generation statistics
-  - Colorful console display
+- OpenAI (GPT-4o and GPT-4o-mini)
+- DeepSeek (Chat and code models)
+- Groq (Llama 3.x and Mixtral models)
+- Ollama (Local models)
 
-## Quick Start
+</td>
+<td>
+
+### ⚡ Advanced Features
+
+- Async batch processing
+- Dynamic prompt adaptation
+- Duplicate detection
+- Progress saving
+- Response length control
+
+</td>
+</tr>
+</table>
+
+## 🚀 Quick Start
 
 1. Clone the repository:
    ```bash
@@ -51,9 +123,9 @@ Lemon-Aid is a powerful tool for generating high-quality training data using mul
    python run.py
    ```
 
-## Project Structure
+## 📁 Project Structure
 
-```
+```plaintext
 lemon-aid/
 ├── src/               # Source code
 │   ├── lemonaid.py    # Main application
@@ -70,17 +142,17 @@ lemon-aid/
 └── .env.example      # Environment setup guide
 ```
 
-## Output Format
+## 📤 Output Format
 
 The tool generates training data in JSONL format with special tokens:
 
-```json
+```jsonc
 {
   "text": "<|im_start|>system\nYou are a knowledgeable assistant...<|im_end|>\n<|im_start|>user\nQuestion here...<|im_end|>\n<|im_start|>assistant\nAnswer here...<|im_end|>"
 }
 ```
 
-## Error Handling
+## ⚡ Error Handling
 
 - Graceful shutdown on interruption
 - Automatic retry mechanisms
@@ -88,19 +160,18 @@ The tool generates training data in JSONL format with special tokens:
 - Progress preservation
 - Detailed error tracking
 
-## Requirements
+## 📋 Requirements
 
 - Python 3.8+
-- aiohttp>=3.9.3
-- backoff>=2.2.1
-- openai>=1.12.0
-- rich>=13.7.0
-- python-dotenv>=1.0.0
-- tqdm>=4.66.2
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- Dependencies:
+  ```plaintext
+  aiohttp>=3.9.3
+  backoff>=2.2.1
+  openai>=1.12.0
+  rich>=13.7.0
+  python-dotenv>=1.0.0
+  tqdm>=4.66.2
+  ```
 
 ## 🤝 Contributing
 
@@ -112,7 +183,34 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## 🙏 Acknowledgments
 
 - OpenAI, DeepSeek, Groq, and Ollama for their APIs
 - All contributors and users of this project 
+
+## 📚 Documentation
+
+<details>
+<summary>📖 Detailed Documentation</summary>
+
+- [Full Documentation](docs/README.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Project Map](docs/project-map.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+
+</details>
+
+---
+
+<div align="center">
+  <p>Made with 🍋 by <a href="https://github.com/jakerains">Jake Rains</a></p>
+  <p>
+    <a href="https://github.com/jakerains/lemon-aid/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/jakerains/lemon-aid/issues">Request Feature</a>
+  </p>
+</div> 
