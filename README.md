@@ -65,6 +65,7 @@
 - [Project Structure](#project-structure)
 - [Output Format](#output-format)
 - [Error Handling](#error-handling)
+- [TODO](#-todo)
 - [Next Steps: Fine-tuning with Unsloth](#-next-steps-fine-tuning-with-unsloth)
 - [Requirements](#requirements)
 - [Contributing](#-contributing)
@@ -162,6 +163,43 @@ The tool generates training data in JSONL format with special tokens:
 - Rate limit handling
 - Progress preservation
 - Detailed error tracking
+
+## 📝 TODO
+
+### Planned Features
+- [ ] Add Hugging Face model support
+  - [ ] Integration with Hugging Face Hub API
+  - [ ] Support for popular open source models (Mixtral, Yi, etc.)
+  - [ ] Custom model loading capabilities
+- [ ] Add Google Gemini support
+  - [ ] Gemini Pro integration
+  - [ ] Vision model support for multimodal training data
+- [ ] Add Anthropic Claude support
+  - [ ] Claude 3 Opus integration
+  - [ ] Claude 3 Sonnet integration
+- [ ] Enhanced Data Generation
+  - [ ] Multi-turn conversation generation
+  - [ ] Custom templating system
+  - [ ] Structured data output formats (beyond JSONL)
+  - [ ] Data augmentation options
+- [ ] UI/UX Improvements
+  - [ ] Web interface option
+  - [ ] Interactive data validation interface
+  - [ ] Real-time generation preview
+  - [ ] Batch editing capabilities
+- [ ] Advanced Features
+  - [ ] Data quality scoring system
+  - [ ] Custom validation rules
+  - [ ] Export to various fine-tuning formats
+  - [ ] Integration with popular training frameworks
+- [ ] Documentation
+  - [ ] Comprehensive API documentation
+  - [ ] More usage examples
+  - [ ] Provider-specific guides
+  - [ ] Fine-tuning tutorials
+
+### Community Contributions Welcome!
+We especially welcome contributions in these areas. See our [Contributing Guidelines](CONTRIBUTING.md) for more information.
 
 ## 🚀 Next Steps: Fine-tuning with Unsloth
 
