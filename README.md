@@ -1,101 +1,106 @@
-# 🍋 Lemon-Aid
+# 🍋 Lemon-Aid v1.0.2
 
-A powerful tool for generating high-quality training data using multiple LLM providers, designed specifically for fine-tuning language models.
+Easy Training Data infused with Citrus!
 
-## ✨ Features
+## Overview
 
-- 🤖 Multi-provider support:
-  - OpenAI (GPT-4o, GPT-4o-mini)
-  - DeepSeek (chat, coder)
-  - Groq (Llama 3.x, Mixtral)
-  - Ollama (local models)
-- 🎯 Dynamic response length control
-- 💾 Progress saving and recovery
-- 🔄 Interactive example generation
-- 📝 System prompt customization
-- 🎨 Rich console interface
-- 📊 Detailed progress tracking
-- ⚡ Parallel batch processing
-- 🛡️ Comprehensive error handling
+Lemon-Aid is a powerful tool for generating high-quality training data using multiple LLM providers. It features a unified interface for working with various language models, robust error handling, and an intuitive console interface.
 
-## 🚀 Quick Start
+## Features
 
-### Prerequisites
+- **Multi-Provider Support**
+  - OpenAI (GPT-4o and GPT-4o-mini)
+  - DeepSeek (Chat and code models)
+  - Groq (Llama 3.x and Mixtral models)
+  - Ollama (Local models with dynamic discovery)
 
-- Python 3.7+
-- API keys for your chosen providers:
-  - OpenAI ([Get key](https://platform.openai.com))
-  - DeepSeek ([Get key](https://platform.deepseek.com))
-  - Groq ([Get key](https://console.groq.com))
-  - Ollama ([Install locally](https://ollama.ai))
+- **Advanced Generation**
+  - Asynchronous batch processing
+  - Dynamic prompt adaptation
+  - Duplicate detection and filtering
+  - Progress saving and recovery
+  - Customizable response lengths
 
-### Installation
+- **Rich Interface**
+  - Interactive provider/model selection
+  - Real-time progress tracking
+  - Detailed error reporting
+  - Generation statistics
+  - Colorful console display
+
+## Quick Start
 
 1. Clone the repository:
-```bash
-git clone https://github.com/jakerains/lemon-aid.git
-cd lemon-aid
-```
+   ```bash
+   git clone https://github.com/jakerains/lemon-aid.git
+   cd lemon-aid
+   ```
 
 2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Set up your environment:
-```bash
-cp .env.example .env
-# Edit .env with your API keys
+   - Copy `.env.example` to `.env`
+   - Add your API keys for desired providers
+   - For Ollama, ensure the service is running locally
+
+4. Run the tool:
+   ```bash
+   python run.py
+   ```
+
+## Project Structure
+
+```
+lemon-aid/
+├── src/               # Source code
+│   ├── lemonaid.py    # Main application
+│   └── llm_providers.py # Provider implementations
+├── assets/            # Images and resources
+│   └── lemon-aid-big-ascii-art.txt
+├── data/              # Generated data files
+│   └── training_data.jsonl
+├── docs/              # Documentation
+│   ├── CHANGELOG.md
+│   └── project-map.md
+├── run.py            # Root launcher script
+├── requirements.txt   # Python dependencies
+└── .env.example      # Environment setup guide
 ```
 
-## 💻 Usage
+## Output Format
 
-Run the script:
-```bash
-python lemonaid.py
-```
+The tool generates training data in JSONL format with special tokens:
 
-You'll be guided through:
-1. Selecting your LLM provider
-2. Choosing a specific model
-3. Configuring your training data requirements:
-   - Purpose/context
-   - Answer length preference
-   - Number of examples
-   - Output filename
-
-The tool will then:
-1. Generate and let you approve a system prompt
-2. Show example Q&A pairs for your approval
-3. Generate the requested entries with progress tracking
-4. Save results in JSONL format for fine-tuning
-
-## 📄 Output Format
-
-The tool generates JSONL files formatted for fine-tuning:
 ```json
 {
-    "text": "<|im_start|>system\nYou are a knowledgeable assistant...<|im_end|>\n<|im_start|>user\n[Question]<|im_end|>\n<|im_start|>assistant\n[Answer]<|im_end|>"
+  "text": "<|im_start|>system\nYou are a knowledgeable assistant...<|im_end|>\n<|im_start|>user\nQuestion here...<|im_end|>\n<|im_start|>assistant\nAnswer here...<|im_end|>"
 }
 ```
 
-## 🛡️ Error Handling
+## Error Handling
 
-- Automatic retries with exponential backoff
-- Progress saving on interruption
-- Rate limit management
-- Graceful shutdown
-- Detailed error messages
+- Graceful shutdown on interruption
+- Automatic retry mechanisms
+- Rate limit handling
+- Progress preservation
+- Detailed error tracking
 
-## 📦 Dependencies
+## Requirements
 
-See [requirements.txt](requirements.txt) for the full list:
-- openai>=1.12.0
-- python-dotenv>=1.0.0
-- rich>=13.7.0
+- Python 3.8+
 - aiohttp>=3.9.3
 - backoff>=2.2.1
+- openai>=1.12.0
+- rich>=13.7.0
+- python-dotenv>=1.0.0
 - tqdm>=4.66.2
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🤝 Contributing
 
@@ -106,17 +111,6 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the Commons Clause License with additional restrictions - see the [LICENSE](LICENSE) file for details. This means:
-
-- ✅ You can download and use the software for personal use
-- ❌ You cannot modify or adapt the software
-- ❌ You cannot sell or redistribute the software
-- ❌ You cannot use it for commercial purposes
-
-All rights reserved by Jake Rains.
 
 ## 🙏 Acknowledgments
 
