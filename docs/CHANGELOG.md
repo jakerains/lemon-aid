@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0] - 2024-03-20
+
+### Added
+- Output directory organization for generated files
+- User-selectable chat template formats
+- Dynamic template selection per provider
+- Improved progress tracking and file management
+- Enhanced error handling and cleanup
+
+### Changed
+- Moved all output files to dedicated 'output' directory
+- Updated file handling for better organization
+- Improved temporary file management
+- Enhanced user interface for template selection
+- Better progress saving and error recovery
+
 ## [1.0.3] - 2024-03-19
 
 ### Changed
@@ -79,4 +95,42 @@
 - Enhanced cleanup of temporary files
 - Fixed shutdown behavior on interruption
 - Corrected model validation for Groq and DeepSeek
-- Improved handling of rate limits and timeouts 
+- Improved handling of rate limits and timeouts
+
+## [1.0.4] - 2024-03-19
+
+### Added
+- UV support for faster, more reliable package management
+- Setup script for automated environment creation
+- Improved installation documentation
+- Development environment setup guide
+
+### Changed
+- Updated requirements.txt format for UV compatibility
+- Simplified environment setup process
+- Enhanced dependency management
+
+### Fixed
+- Changed the UV version check in `setup.py` to use the uv CLI command (`uv --version`) rather than `python -m uv --version` since the uv package does not support module execution
+
+## [1.0.5] - 2024-03-19
+
+### Fixed
+- Fixed setup script to properly handle virtual environment creation
+- Improved error handling in setup process
+- Added proper pip initialization in virtual environment
+- Enhanced setup script robustness and error reporting
+
+## [1.1.0] - 2024-03-20
+
+### Added
+- Support for Hugging Face chat templates
+- Multiple template formats (ChatML, Llama, Alpaca)
+- Dynamic template selection per provider
+- Custom template definition support
+- Jinja2-based template rendering
+
+### Changed
+- Updated provider configurations to include chat template formats
+- Enhanced message formatting for better compatibility
+- Improved documentation with template examples 

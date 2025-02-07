@@ -1,0 +1,5 @@
+# Development dependencies
+-r requirements.txt    # Include all production dependencies
+pytest>=7.4.0         # Testing framework
+black>=23.3.0         # Code formatting
+ruff>=0.1.9           # Fast Python linter 

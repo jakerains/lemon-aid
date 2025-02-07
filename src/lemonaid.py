@@ -30,51 +30,19 @@ import sys
 console = Console()
 
 def create_header() -> Panel:
-    """Create the header panel with ASCII art."""
-    try:
-        with open('assets/lemon-aid-big-ascii-art.txt', 'r', encoding='utf-8') as f:
-            ascii_art = f.read().splitlines()
-            # Filter empty lines at start and end
-            while ascii_art and not ascii_art[0].strip():
-                ascii_art.pop(0)
-            while ascii_art and not ascii_art[-1].strip():
-                ascii_art.pop()
-            
-            # Create styled text with colors
-            styled_art = Text()
-            
-            # Process each line
-            for i, line in enumerate(ascii_art):
-                if "LEMON-AID" in line:
-                    # Split and color the LEMON-AID line
-                    parts = line.split("LEMON-AID")
-                    styled_art.append(parts[0], style="yellow")
-                    styled_art.append("LEMON-AID", style="green")
-                    if len(parts) > 1:
-                        styled_art.append(parts[1], style="yellow")
-                    styled_art.append("\n")
-                elif 2 <= i <= 4 and "⣿" in line:  # Only color the leaf area (lines 2-4)
-                    styled_art.append(line, style="green")
-                    styled_art.append("\n")
-                else:  # The rest of the lemon in yellow
-                    styled_art.append(line, style="yellow")
-                    styled_art.append("\n")
-            
-            return Panel(
-                styled_art,
-                box=box.ROUNDED,
-                border_style="yellow",
-                padding=(1, 2),
-                title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.3[/bold yellow] 🍋",
-                subtitle="[bright_white]Easy Training Data Generation infused with Citrus![/bright_white]"
-            )
-    except FileNotFoundError:
-        return Panel(
-            "[bold yellow]Welcome to Lemon-Aid![/bold yellow]\nEasy Training Data Generation infused with Citrus!",
-            box=box.ROUNDED,
-            border_style="yellow",
-            title="🍋 [bold yellow]Welcome to Lemon-Aid v1.0.3[/bold yellow] 🍋"
-        )
+    """Create the application header."""
+    header_text = Text()
+    header_text.append("🍋 ", style="yellow bold")
+    header_text.append("Lemon-Aid ", style="white bold")
+    header_text.append("v1.2.0", style="cyan")
+    header_text.append("\nTraining Data Generator", style="yellow")
+    
+    return Panel(
+        header_text,
+        box=box.ROUNDED,
+        border_style="yellow",
+        padding=(1, 2)
+    )
 
 def create_main_layout() -> Layout:
     """Create the main application layout."""
@@ -115,8 +83,18 @@ def display_model_selection(provider: LLMProvider) -> Optional[str]:
         
         return model
 
+def ensure_output_dir():
+    """Create output directory if it doesn't exist."""
+    output_dir = os.path.join(os.getcwd(), "output")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    return output_dir
+
 async def get_user_preferences() -> Dict[str, Any]:
     """Get user preferences for training data generation."""
+    # Ensure output directory exists
+    output_dir = ensure_output_dir()
+    
     console.print("\n[bold cyan]Training Data Configuration[/bold cyan]")
     
     # Get purpose/context
@@ -130,6 +108,32 @@ async def get_user_preferences() -> Dict[str, Any]:
     )
     purpose = Prompt.ask("[cyan]Purpose/Context[/cyan]")
     console.print(f"[debug] Purpose/Context: {purpose}")
+    
+    # Get chat template preference
+    console.print(
+        "\n[yellow]Which chat template format would you like to use?[/yellow]\n"
+        "[dim]Available formats:[/dim]\n"
+        "1. ChatML (OpenAI style) - Best for OpenAI and DeepSeek\n"
+        "2. Llama (Llama style) - Best for Llama models and Groq\n"
+        "3. Alpaca (Simple instruction/response) - Universal format\n"
+        "4. Auto (Let the system choose based on provider) [default]"
+    )
+    
+    template_choice = Prompt.ask(
+        "[cyan]Template format[/cyan]",
+        choices=["1", "2", "3", "4"],
+        default="4"
+    )
+    
+    template_map = {
+        "1": "chatml",
+        "2": "llama",
+        "3": "alpaca",
+        "4": "auto"
+    }
+    
+    selected_template = template_map[template_choice]
+    console.print(f"[debug] Selected template: {selected_template}")
     
     # Get answer length preference
     console.print(
@@ -181,14 +185,22 @@ async def get_user_preferences() -> Dict[str, Any]:
         except ValueError:
             console.print("[red]Please enter a valid number.[/red]")
     console.print(f"[debug] Number of pairs: {num_pairs}")
-
+    
     # Get output filename
     console.print("\n[yellow]Where would you like to save the training data?[/yellow]")
+    default_filename = os.path.join("output", "training_data.jsonl")
     output_file = Prompt.ask(
         "[cyan]Output filename[/cyan]",
-        default="data/training_data.jsonl",
+        default=default_filename,
         show_default=True
     )
+    
+    # Ensure the output path is within the output directory
+    if not os.path.dirname(output_file):
+        output_file = os.path.join("output", output_file)
+    elif not output_file.startswith("output"):
+        output_file = os.path.join("output", os.path.basename(output_file))
+    
     console.print(f"[debug] Output filename: {output_file}")
     
     # Ensure filename ends with .jsonl
@@ -199,6 +211,7 @@ async def get_user_preferences() -> Dict[str, Any]:
     summary = Panel(
         f"[bold]Generation Settings[/bold]\n\n"
         f"[cyan]Purpose/Context:[/cyan]\n{purpose}\n\n"
+        f"[cyan]Chat Template:[/cyan] {selected_template}\n"
         f"[cyan]Answer Style:[/cyan] {length_settings[length_choice]['style']}\n"
         f"[cyan]Number of Q&A Pairs:[/cyan] {num_pairs}\n"
         f"[cyan]Output File:[/cyan] {output_file}",
@@ -216,7 +229,8 @@ async def get_user_preferences() -> Dict[str, Any]:
         "num_entries": num_pairs,
         "max_tokens": length_settings[length_choice]["max_tokens"],
         "style": length_settings[length_choice]["style"],
-        "output_file": output_file
+        "output_file": output_file,
+        "chat_template": selected_template
     }
 
 async def generate_qa_pair_async(client: AsyncOpenAI, prompt: str, system_prompt: str, model: str, max_tokens: int, temperature: float = 0.7) -> str:
@@ -460,13 +474,16 @@ def display_qa_pair(index: int, aspect: str, question: str, answer: str):
 async def generate_training_data(
     topic: str, 
     num_entries: int, 
-    output_file: str = "data/training_data.jsonl",
+    output_file: str = "output/training_data.jsonl",
     provider = None,
     model = None,
     client = None,
     preferences = None
 ):
     """Generates a JSONL training data file using the selected LLM provider."""
+    # Ensure output directory exists
+    ensure_output_dir()
+    
     def print_generation_stats(total_time: float, successful_entries: int, total_attempts: int):
         """Display formatted generation statistics."""
         stats_table = Table(show_header=False, box=box.SIMPLE)
@@ -491,8 +508,12 @@ async def generate_training_data(
     async def save_progress(training_data, successful_entries):
         """Helper function to save current progress to file."""
         if training_data:
-            temp_file = output_file + ".temp"
+            # Create temp file in the same directory as the output file
+            temp_file = f"{output_file}.temp"
             try:
+                # Ensure the output directory exists
+                os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                
                 with open(temp_file, "w", encoding='utf-8') as f:
                     for entry in training_data:
                         json.dump({"text": entry}, f, ensure_ascii=False)
@@ -721,7 +742,7 @@ async def main():
         # Load environment variables
         load_dotenv()
         
-        # Get provider and model selection
+        # Get provider and model selection first
         try:
             provider = await select_provider()
             if not provider:
@@ -740,16 +761,16 @@ async def main():
             console.print("[yellow]Process interrupted by user.[/yellow]")
             return
             
-        # Initialize the client
-        client = create_client(provider)
-        if not client:
-            console.print("[red]Failed to initialize client. Please check your API keys.[/red]")
-            return
-            
-        # Get user preferences including output file
+        # Get user preferences including output file and chat template
         preferences = await get_user_preferences()
         if not preferences:
             console.print("[yellow]Configuration cancelled. Exiting...[/yellow]")
+            return
+            
+        # Initialize the client with template preference
+        client = create_client(provider, preferences.get('chat_template', 'auto'))
+        if not client:
+            console.print("[red]Failed to initialize client. Please check your API keys.[/red]")
             return
             
         # Generate and revise system prompt until approved

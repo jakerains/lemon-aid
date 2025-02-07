@@ -62,6 +62,22 @@ class LLMProvider:
     model_type: Optional[str] = None
     client_type: str = "openai"  # Can be "openai" or "ollama"
     _api_key: Optional[str] = None
+    chat_template_format: Optional[str] = None  # Added field for chat template format
+
+    def __post_init__(self):
+        """Initialize chat template if format is specified."""
+        if self.chat_template_format:
+            from chat_templates import ChatTemplate
+            self.chat_template = ChatTemplate.from_format(self.chat_template_format)
+        else:
+            self.chat_template = None
+
+    def format_messages(self, messages: List[Dict[str, str]]) -> Union[List[Dict[str, str]], str]:
+        """Format messages according to the provider's template."""
+        if not self.chat_template:
+            return messages
+        
+        return self.chat_template.apply(messages)
 
     @property
     def api_key(self) -> Optional[str]:
@@ -277,7 +293,8 @@ PROVIDERS = {
         description="OpenAI's GPT models",
         model_type="Text Generation, Reasoning",
         supports_functions=True,
-        client_type="openai"
+        client_type="openai",
+        chat_template_format="chatml"  # Using ChatML format
     ),
     "ollama": LLMProvider(
         name="Ollama",
@@ -290,7 +307,8 @@ PROVIDERS = {
         description="Local Ollama models",
         model_type="Text Generation",
         supports_functions=False,
-        client_type="ollama"
+        client_type="ollama",
+        chat_template_format="llama"  # Using Llama format by default
     ),
     "deepseek": LLMProvider(
         name="DeepSeek",
@@ -306,7 +324,8 @@ PROVIDERS = {
         description="DeepSeek's chat and code models",
         model_type="Text Generation, Code",
         supports_functions=True,
-        client_type="openai"
+        client_type="openai",
+        chat_template_format="chatml"  # Using ChatML format
     ),
     "groq": LLMProvider(
         name="Groq",
@@ -327,13 +346,14 @@ PROVIDERS = {
             "gemma-7b-it",
             "gemma2-9b-it"
         ],
-        default_model="llama-3.3-70b-versatile",  # Updated default to latest model
+        default_model="llama-3.3-70b-versatile",
         max_tokens=32768,
         context_window=32768,
         description="Ultra-fast inference with Groq",
         model_type="Text Generation",
         supports_functions=True,
-        client_type="openai"
+        client_type="openai",
+        chat_template_format="llama"  # Using Llama format for Llama models
     ),
 }
 
@@ -452,7 +472,7 @@ def select_model(provider: LLMProvider) -> Optional[str]:
         except KeyboardInterrupt:
             return None
 
-def create_client(provider: LLMProvider) -> Optional[Union[AsyncOpenAI, Any]]:
+def create_client(provider: LLMProvider, template_choice: str = "auto") -> Optional[Union[AsyncOpenAI, Any]]:
     """Create an API client for the selected provider."""
     if not provider or not provider.is_available:
         return None
@@ -464,6 +484,10 @@ def create_client(provider: LLMProvider) -> Optional[Union[AsyncOpenAI, Any]]:
             return "ollama"
         else:
             # For OpenAI-compatible APIs
+            # Update the template format if user specified one
+            if template_choice != "auto":
+                provider.chat_template_format = template_choice
+                
             return AsyncOpenAI(
                 api_key=provider.api_key,
                 base_url=provider.base_url

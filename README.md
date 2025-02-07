@@ -1,15 +1,17 @@
-# Lemon-Aid
+# Lemon-Aid 🍋 v1.2.0
 
 <div align="center">
   <img src="assets/lemonaidlogo.png" alt="Lemon-Aid Logo" width="450"/>
   
+  > The results might not be *THAT* great, but damn it's easy... 😎
+  
   <h3>🍋 Easy Training Data Generation infused with Citrus! 🍋</h3>
   
-  <p><strong>Lemon-Aid v1.0.3</strong></p>
+  <p><strong>Lemon-Aid v1.2.0</strong></p>
 
   <p>
     <a href="https://github.com/jakerains/lemon-aid/releases/latest">
-      <img alt="Version" src="https://img.shields.io/badge/version-1.0.3-brightgreen.svg"/>
+      <img alt="Version" src="https://img.shields.io/badge/version-1.2.0-brightgreen.svg"/>
     </a>
     <a href="LICENSE">
       <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"/>
@@ -99,6 +101,9 @@ Lemon-Aid is a powerful tool for generating high-quality training data using mul
 - Duplicate detection
 - Progress saving
 - Response length control
+- Multiple chat template formats (ChatML, Llama, Alpaca)
+- Custom template definitions
+- Provider-specific formatting
 
 </td>
 </tr>
@@ -112,20 +117,31 @@ Lemon-Aid is a powerful tool for generating high-quality training data using mul
    cd lemon-aid
    ```
 
-2. Install dependencies:
+2. Run the setup script:
    ```bash
-   pip install -r requirements.txt
+   python setup.py
    ```
 
-3. Set up your environment:
+3. Activate the virtual environment:
+   - Windows:
+     ```bash
+     .\venv\Scripts\activate
+     ```
+   - Linux/Mac:
+     ```bash
+     source venv/bin/activate
+     ```
+
+4. Set up your environment:
    - Copy `.env.example` to `.env`
    - Add your API keys for desired providers
    - For Ollama, ensure the service is running locally
 
-4. Run the tool:
+5. Run the tool:
    ```bash
    python run.py
    ```
+
 
 ## 📁 Project Structure
 
@@ -133,7 +149,8 @@ Lemon-Aid is a powerful tool for generating high-quality training data using mul
 lemon-aid/
 ├── src/               # Source code
 │   ├── lemonaid.py    # Main application
-│   └── llm_providers.py # Provider implementations
+│   ├── llm_providers.py # Provider implementations
+│   └── chat_templates.py # Chat template handling
 ├── assets/            # Images and resources
 │   └── lemon-aid-big-ascii-art.txt
 ├── data/              # Generated data files
@@ -148,11 +165,17 @@ lemon-aid/
 
 ## 📤 Output Format
 
-The tool generates training data in JSONL format with special tokens:
+The tool generates training data in JSONL format with provider-specific chat templates:
 
 ```jsonc
+// ChatML format example:
 {
   "text": "<|im_start|>system\nYou are a knowledgeable assistant...<|im_end|>\n<|im_start|>user\nQuestion here...<|im_end|>\n<|im_start|>assistant\nAnswer here...<|im_end|>"
+}
+
+// Llama format example:
+{
+  "text": "<s>[INST] You are a knowledgeable assistant... [/INST]\n[INST] Question here... [/INST]\nAnswer here...</s>"
 }
 ```
 
@@ -273,7 +296,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  <p>Made with 🍋 by <a href="https://github.com/jakerains">Jake Rains</a></p>
+  <p>Made with 🍋 by <a href="https://github.com/jakerains">GenAI Jake</a></p>
   <p>
     <a href="https://github.com/jakerains/lemon-aid/issues">Report Bug</a>
     ·

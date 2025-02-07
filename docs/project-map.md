@@ -85,6 +85,13 @@ Lemon-Aid (v1.0.2) is a specialized tool designed for generating high-quality tr
 - API key validation
 - Error handling per provider
 
+### Chat Templates
+- Support for Hugging Face chat templates
+- Multiple template formats (ChatML, Llama, Alpaca, etc.)
+- Dynamic template selection per provider
+- Custom template definition support
+- Consistent output formatting across providers
+
 ### Output Format
 - JSONL format with special tokens
 - System/User/Assistant structure
@@ -97,4 +104,32 @@ Lemon-Aid (v1.0.2) is a specialized tool designed for generating high-quality tr
 - Provider-specific settings
 - Model selection
 - Rate limiting configuration
-- Output customization 
+- Output customization
+
+## Lemon-Aid Setup
+
+- **setup.py**
+  - Located in the project root.
+  - Sets up the development environment using the `uv` CLI tool.
+  - **Key Changes:**
+    - Updated to check for uv using the CLI command (`uv --version`) instead of `python -m uv --version`.
+    - Creates and configures a virtual environment.
+    - Installs necessary packages and development dependencies within the virtual environment.
+
+## Architecture Decisions
+
+- **Using the uv CLI Tool:**
+  - The `uv` package does not provide a `__main__.py` for module execution.
+  - Therefore, the setup process now verifies the installation using `uv --version`.
+  - Ensures consistent behavior across both the global and virtual environments.
+
+## References
+
+- [Lemon-Aid setup script](../setup.py)
+
+## Usage Recommendation
+
+1. **After Setup:**  
+   - Activate your virtual environment (e.g., on Windows use `.\venv\Scripts\activate`).
+   -
+   - Run: python launch.py 
